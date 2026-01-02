@@ -58,3 +58,8 @@ Thumbs.db
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# BMAD Method
+_bmad-output/
+_bmad/
+.claude/commands/bmad/
