@@ -179,6 +179,22 @@ Final Result:
 - Full report: ai_trends_report.md
 ```
 
+### CLI Usage
+
+```bash
+# Single agent task
+python run.py single "Calculate 2 + 2"
+
+# Multi-agent collaboration
+python run.py multi "Research AI trends and write code to visualize them"
+
+# Interactive mode
+python run.py interactive
+
+# Run demonstration
+python run.py demo
+```
+
 ---
 
 ## 📚 Examples
