@@ -28,11 +28,17 @@ class AgentFinish:
 class BaseAgent(ABC):
     """Abstract base class for all agents"""
     
-    def __init__(self, name: str, description: str, llm: Any, tools: List[Any]):
+    def __init__(self, name: str, description: str, llm: Any, tools: Any):
         self.name = name
         self.description = description
         self.llm = llm
-        self.tools = {tool.name: tool for tool in tools}
+        # Handle both dict and list tool formats
+        if isinstance(tools, dict):
+            self.tools = tools
+        elif isinstance(tools, list):
+            self.tools = {tool.name: tool for tool in tools}
+        else:
+            self.tools = {}
         self.memory = []
     
     @abstractmethod

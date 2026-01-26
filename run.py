@@ -27,7 +27,56 @@ class MockLLM:
         """Generate mock response"""
         self.call_count += 1
 
-        # Simple pattern matching
+        # Check if this is a ReAct agent prompt
+        if "Question:" in prompt and "Thought:" in prompt and "Action:" in prompt:
+            task = prompt.split("Question:")[-1].split("\n")[0].strip().lower()
+
+            # Check if we already have some iterations (this is a continuation)
+            if "Observation:" in prompt:
+                # Extract the observation result
+                observation_lines = [line for line in prompt.split("\n") if "Observation:" in line]
+                if observation_lines:
+                    last_observation = observation_lines[-1].split("Observation:")[-1].strip()
+
+                    # This is a continuation, check if we should finish
+                    if "search" in prompt.lower() or "calculator" in prompt.lower():
+                        # We've used tools, now provide final answer
+                        if "calculate" in task or "math" in task or "+" in task:
+                            return f"Thought: I now know the final answer\nFinal Answer: The calculation result is {last_observation}"
+                        else:
+                            return f"Thought: I now know the final answer\nFinal Answer: Based on my research, here's what I found: {last_observation}"
+                    else:
+                        return f"Thought: I now know the final answer\nFinal Answer: Task completed successfully"
+                else:
+                    return f"Thought: I now know the final answer\nFinal Answer: Task completed successfully"
+            else:
+                # First iteration - decide what to do
+                if "calculate" in task or "math" in task or "+" in task:
+                    # Extract the actual math expression from the task
+                    expression = task
+                    return f"Thought: I need to calculate this mathematical expression\nAction: calculator\nAction Input: {expression}"
+                elif "search" in task or "research" in task or "find" in task:
+                    return f"Thought: I need to search for information\nAction: search\nAction Input: {task}"
+                else:
+                    return f"Thought: I should search for information about this\nAction: search\nAction Input: {task}"
+
+        # Check if this is a supervisor planning prompt
+        if "PLAN:" in prompt or "supervisor" in prompt.lower():
+            if "research" in prompt.lower() and "code" in prompt.lower():
+                return """PLAN:
+Step 1: researcher - Research the latest AI trends and gather information
+Step 2: coder - Create code to visualize the AI trends
+COMPLETE: Task completed successfully with research and code."""
+            elif "research" in prompt.lower():
+                return """PLAN:
+Step 1: researcher - Research the requested topic and gather comprehensive information
+COMPLETE: Research completed."""
+            else:
+                return """PLAN:
+Step 1: coder - Analyze the request and provide a solution
+COMPLETE: Task completed."""
+
+        # Simple pattern matching for single agent
         if "research" in prompt.lower():
             return "FINAL ANSWER: Based on research, I found relevant information about the topic."
         elif "code" in prompt.lower() or "python" in prompt.lower():
@@ -40,41 +89,12 @@ class MockLLM:
 
 def create_mock_tools():
     """Create mock tools for testing"""
-    from agent_framework.tools.base_tool import BaseTool
-
-    class SearchTool(BaseTool):
-        name = "search"
-        description = "Search for information"
-
-        def run(self, query: str) -> str:
-            return f"Found information about: {query}"
-
-    class CalculatorTool(BaseTool):
-        name = "calculator"
-        description = "Perform calculations"
-
-        def run(self, expression: str) -> str:
-            try:
-                result = eval(expression)
-                return f"Result: {result}"
-            except:
-                return "Error: Invalid expression"
-
-    class CodeTool(BaseTool):
-        name = "code_executor"
-        description = "Execute Python code"
-
-        def run(self, code: str) -> str:
-            try:
-                exec_result = eval(code)
-                return f"Executed: {exec_result}"
-            except:
-                return "Error: Code execution failed"
+    from agent_framework.tools.base_tool import SearchTool, CalculatorTool, PythonREPLTool
 
     return {
         "search": SearchTool(),
         "calculator": CalculatorTool(),
-        "code_executor": CodeTool()
+        "python_repl": PythonREPLTool()
     }
 
 
@@ -286,6 +306,8 @@ def demo_command(args):
             print(f"  Test: 2 + 2 = {tool.run('2+2')}")
         elif tool_name == "search":
             print(f"  Test: {tool.run('Python')}")
+        elif tool_name == "python_repl":
+            print(f"  Test: {tool.run('print(\"Hello from Python!\")')}")
 
     print("\n" + "=" * 60)
     print("✅ Demo Complete!")
