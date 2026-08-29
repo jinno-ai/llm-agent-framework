@@ -63,3 +63,6 @@ dmypy.json
 _bmad-output/
 _bmad/
 .claude/commands/bmad/
+
+# Harness session worktrees (runtime artifacts, harness-managed)
+worktrees/
