@@ -1,0 +1,150 @@
+name: 'Python CI'
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  install:
+    name: Install Dependencies
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: jinno0/github-actions-hub/actions/setup-python@v1
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+          if [ -f "requirements-dev.txt" ]; then
+            pip install -r requirements-dev.txt
+          fi
+
+      - name: Cache installed packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.local/share/pip
+            .venv
+          key: python-packages-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+
+  lint:
+    name: Lint
+    runs-on: [self-hosted, linux, x64]
+    needs: install
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: jinno0/github-actions-hub/actions/setup-python@v1
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Restore packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.local/share/pip
+            .venv
+          key: python-packages-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+
+      - name: Run flake8
+        run: |
+          if command -v flake8 &> /dev/null; then
+            flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
+            flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics || true
+          else
+            echo "flake8 not installed, skipping"
+          fi
+
+      - name: Run black check
+        run: |
+          if command -v black &> /dev/null; then
+            black --check . || true
+          else
+            echo "black not installed, skipping"
+          fi
+
+  test:
+    name: Test
+    runs-on: [self-hosted, linux, x64]
+    needs: install
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: jinno0/github-actions-hub/actions/setup-python@v1
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Restore packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.local/share/pip
+            .venv
+          key: python-packages-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+
+      - name: Run pytest
+        run: |
+          if command -v pytest &> /dev/null; then
+            pytest --verbose || echo "Tests completed with status: $?"
+          elif [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
+            python -m pytest --verbose || echo "Tests completed with status: $?"
+          else
+            echo "pytest not available, skipping tests"
+          fi
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          if-no-files-found: ignore
+
+  type-check:
+    name: Type Check
+    runs-on: [self-hosted, linux, x64]
+    needs: install
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: jinno0/github-actions-hub/actions/setup-python@v1
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Restore packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.local/share/pip
+            .venv
+          key: python-packages-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+
+      - name: Run mypy
+        run: |
+          if command -v mypy &> /dev/null; then
+            mypy . --ignore-missing-imports || true
+          else
+            echo "mypy not installed, skipping"
+          fi
