@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 
-**Production-ready multi-agent orchestration system for complex task automation**
+**Multi-agent orchestration experiments — ReAct / supervisor / tool / memory components in Python**
 
 [Features](#-features) • [Architecture](#-architecture) • [Quick Start](#-quick-start) • [Examples](#-examples) • [API](#-api)
 
@@ -23,7 +23,7 @@ Modern AI applications require more than single LLM calls - they need **intellig
 - 🤝 **Collaborate** with other specialized agents
 - 🔄 **Adapt** based on intermediate results
 
-This framework provides a **production-ready foundation** for building sophisticated multi-agent systems using LangGraph and modern LLM architectures.
+A framework for building multi-agent systems — agent implementations, tool integrations, and conversation memory, using LangGraph/LangChain.
 
 ---
 
@@ -341,3 +341,11 @@ Made with ❤️ by [Jinno](https://github.com/jinno-ai)
 ⭐️ Star this repo if you find it helpful!
 
 </div>
+
+
+## Status
+
+Early-stage implementation. The agent classes, tool base, and memory
+components exist and are runnable via `run.py` and the tests; the
+benchmarks and enterprise features listed in older docs were removed as
+unverified scaffolding.
